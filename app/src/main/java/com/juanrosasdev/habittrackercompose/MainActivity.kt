@@ -5,12 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -21,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.juanrosasdev.habittrackercompose.model.Habit
 import com.juanrosasdev.habittrackercompose.model.HabitState
-import com.juanrosasdev.habittrackercompose.ui.theme.HabitTrackerComposeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,8 +39,8 @@ fun HabitScreenScreenPrototype() {
         mutableStateListOf(
             HabitState(Habit(1, "Ir al Gym", "💪")),
             HabitState(Habit(2, "Leer", "📚")),
-            HabitState(Habit(2, "Control de Redes Sociales", "📵")),
-            HabitState(Habit(2, "No Alcohol", "🍺"))
+            HabitState(Habit(3, "Control de Redes Sociales", "📵")),
+            HabitState(Habit(4, "No Alcohol", "🍺"))
         )
     }
 
