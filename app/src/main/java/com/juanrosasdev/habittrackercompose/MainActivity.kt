@@ -108,14 +108,12 @@ fun MonthlyHabitGrid(
 
         LazyRow {
             items(days) { day ->
-                val backgroundColor = dayColumnBackground(
-                    day = day,
-                    todayDay = todayDay
-                )
+                val backgroundColor = dayColumnBackground(day, todayDay)
 
                 DayColumn(
                     day = day,
                     habits = habits,
+                    todayDay = todayDay,
                     backgroundColor = backgroundColor,
                     onToggle = onToggle
                 )
@@ -143,6 +141,7 @@ fun HabitNameColumn(habits: List<HabitMonthRow>) {
 fun DayColumn(
     day: Int,
     habits: List<HabitMonthRow>,
+    todayDay: Int,
     backgroundColor: Color,
     onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit
 ) {
@@ -155,11 +154,13 @@ fun DayColumn(
             HabitDayCell(
                 habit = habit,
                 day = day,
+                todayDay = todayDay,
                 onToggle = onToggle
             )
         }
     }
 }
+
 
 @Composable
 fun DayHeader(day: Int) {
@@ -176,18 +177,22 @@ fun DayHeader(day: Int) {
 fun HabitDayCell(
     habit: HabitMonthRow,
     day: Int,
+    todayDay: Int,
     onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit
 ) {
     val checked = habit.days[day] == true
+    val enabled = day <= todayDay
 
     Checkbox(
         checked = checked,
+        enabled = enabled,
         onCheckedChange = { newValue ->
             onToggle(habit.habitId, day, newValue)
         },
         modifier = Modifier.height(40.dp)
     )
 }
+
 
 @Composable
 fun dayColumnBackground(
