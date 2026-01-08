@@ -4,58 +4,107 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.juanrosasdev.habittrackercompose.data.local.HabitDatabase
+import com.juanrosasdev.habittrackercompose.data.repository.HabitRepository
 import com.juanrosasdev.habittrackercompose.model.Habit
 import com.juanrosasdev.habittrackercompose.model.HabitState
+import com.juanrosasdev.habittrackercompose.ui.habits.HabitsViewModel
+import com.juanrosasdev.habittrackercompose.ui.habits.HabitsViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
 
-            HabitScreenScreenPrototype()
+        val database = HabitDatabase.getDatabase(this)
+        val repository = HabitRepository(database.habitDao())
+
+        val viewModel: HabitsViewModel by viewModels {
+            HabitsViewModelFactory(repository)
+        }
+
+        enableEdgeToEdge()
+
+        setContent {
+            MaterialTheme {
+                HabitsScreen(viewModel = viewModel)
+            }
         }
     }
 }
 
-// PROTOTIPO RÁPIDO (NO PARA PRODUCCIÓN)
 @Composable
-fun HabitScreenScreenPrototype() {
-    // Lista mutable que Compose observa
-    val habitsListState = remember {
-        mutableStateListOf(
-            HabitState(Habit(1, "Ir al Gym", "💪")),
-            HabitState(Habit(2, "Leer", "📚")),
-            HabitState(Habit(3, "Control de Redes Sociales", "📵")),
-            HabitState(Habit(4, "No Alcohol", "🍺"))
-        )
-    }
+fun HabitsScreen(
+    viewModel: HabitsViewModel
+) {
+    // Estado que VIENE del ViewModel
+    val habits by viewModel.habitsUiState.collectAsStateWithLifecycle()
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
 
-    LazyColumn {
-        items(habitsListState.size) { index ->
-            val habitState = habitsListState[index]
-            HabitRow(
-                habitName = habitState.habit.name,
-                emoji = habitState.habit.iconEmoji,
-                isChecked = habitState.isCompleted,
-                onCheckedChange = { checked ->
-                    // Actualizamos la lista reactiva
-                    habitsListState[index] = habitState.copy(isCompleted = checked)
-                }
-            )
+    Scaffold(
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .statusBarsPadding()
+            ) {
+                Text(
+                    text = "Mi Planner",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = selectedDate,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            items(
+                items = habits,
+                key = { it.id } // MUY importante
+            ) { habit ->
+                HabitRow(
+                    habitName = habit.name,
+                    emoji = habit.iconEmoji,
+                    isChecked = habit.isCompleted,
+                    onCheckedChange = { checked ->
+                        viewModel.onHabitChecked(
+                            habitId = habit.id,
+                            isChecked = checked
+                        )
+                    }
+                )
+            }
         }
     }
 }
@@ -65,7 +114,7 @@ fun HabitRow(
     habitName: String,
     emoji: String,
     isChecked: Boolean,
-    onCheckedChange: (Boolean) -> Unit // "State Hoisting" (ver punto 3)
+    onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -80,10 +129,4 @@ fun HabitRow(
             onCheckedChange = onCheckedChange
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HabitTrackerPreview() {
-    HabitScreenScreenPrototype()
 }
