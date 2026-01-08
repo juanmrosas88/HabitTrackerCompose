@@ -2,7 +2,6 @@ package com.juanrosasdev.habittrackercompose.data.repository
 
 import com.juanrosasdev.habittrackercompose.data.entities.HabitEntity
 import com.juanrosasdev.habittrackercompose.data.entities.HabitRecordEntity
-import com.juanrosasdev.habittrackercompose.data.initial.InitialHabit
 import com.juanrosasdev.habittrackercompose.data.local.dao.HabitDao
 
 class HabitRepository(private val habitDao: HabitDao) {

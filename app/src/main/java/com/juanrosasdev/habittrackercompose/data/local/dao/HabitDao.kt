@@ -34,7 +34,27 @@ interface HabitDao {
     """
     )
     fun getHabitsWithStatusForDate(date: String): Flow<List<HabitWithStatus>>
+
+    @Query(
+        """
+    SELECT h.id as habitId,
+           h.name as name,
+           h.iconEmoji as iconEmoji,
+           r.date as date,
+           r.isCompleted as isCompleted
+    FROM habits h
+    LEFT JOIN habit_records r
+        ON h.id = r.habitId
+        AND r.date BETWEEN :startDate AND :endDate
+"""
+    )
+    fun getMonthlyHabits(
+        startDate: String,
+        endDate: String
+    ): Flow<List<MonthlyHabitRecord>>
+
 }
+
 
 // Clase auxiliar para el resultado de la consulta
 data class HabitWithStatus(
@@ -42,4 +62,12 @@ data class HabitWithStatus(
     val name: String,
     val iconEmoji: String,
     val isCompleted: Boolean
+)
+
+data class MonthlyHabitRecord(
+    val habitId: Int,
+    val name: String,
+    val iconEmoji: String,
+    val date: String?,       // puede ser null
+    val isCompleted: Boolean?
 )
