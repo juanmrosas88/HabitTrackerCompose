@@ -2,14 +2,9 @@ package com.juanrosasdev.habittrackercompose.ui.habits
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.juanrosasdev.habittrackercompose.data.local.dao.HabitWithStatus
 import com.juanrosasdev.habittrackercompose.data.repository.HabitRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,6 +18,8 @@ class HabitsViewModel(
 ) : ViewModel() {
 
     private val today: LocalDate = LocalDate.now()
+
+    val todayDayOfMonth: Int = LocalDate.now().dayOfMonth
 
     val todayLabel: String =
         today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
