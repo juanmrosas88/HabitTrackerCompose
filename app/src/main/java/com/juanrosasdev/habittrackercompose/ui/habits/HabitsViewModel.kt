@@ -10,22 +10,56 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.TextStyle
+import java.util.Locale
 
 class HabitsViewModel(
     private val repository: HabitRepository
 ) : ViewModel() {
 
-    private val _selectedDate = MutableStateFlow(LocalDate.now().toString())
-    val selectedDate = _selectedDate.asStateFlow()
+    private val today: LocalDate = LocalDate.now()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val habitsUiState: StateFlow<List<HabitWithStatus>> =
-        _selectedDate
-            .flatMapLatest { date ->
-                repository.getHabitsForDate(date)
+    val todayLabel: String =
+        today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+            .replaceFirstChar { it.uppercase() } +
+                ", ${today.dayOfMonth} de " +
+                today.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+                    .replaceFirstChar { it.uppercase() }
+
+    private val currentMonth = YearMonth.now()
+
+    val monthTitle: String =
+        currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+
+    val monthDays: List<Int> =
+        (1..currentMonth.lengthOfMonth()).toList()
+
+    val monthlyHabits: StateFlow<List<HabitMonthRow>> =
+        repository.getMonthlyHabits(
+            startDate = currentMonth.atDay(1).toString(),
+            endDate = currentMonth.atEndOfMonth().toString()
+        )
+            .map { records ->
+                records
+                    .groupBy { it.habitId }
+                    .map { (_, habitRecords) ->
+                        val first = habitRecords.first()
+                        HabitMonthRow(
+                            habitId = first.habitId,
+                            name = first.name,
+                            emoji = first.iconEmoji,
+                            days = habitRecords
+                                .filter { it.date != null }
+                                .associate {
+                                    LocalDate.parse(it.date!!).dayOfMonth to (it.isCompleted == true)
+                                }
+                        )
+                    }
             }
             .stateIn(
                 viewModelScope,
@@ -33,18 +67,17 @@ class HabitsViewModel(
                 emptyList()
             )
 
-    init {
-        viewModelScope.launch {
-            repository.ensureInitialHabits()
-        }
-    }
-
-    fun onHabitChecked(habitId: Int, isChecked: Boolean) {
+    fun onDayToggle(
+        habitId: Int,
+        day: Int,
+        isCompleted: Boolean
+    ) {
+        val date = currentMonth.atDay(day).toString()
         viewModelScope.launch {
             repository.toggleHabit(
                 habitId = habitId,
-                date = _selectedDate.value,
-                isCompleted = isChecked
+                date = date,
+                isCompleted = isCompleted
             )
         }
     }

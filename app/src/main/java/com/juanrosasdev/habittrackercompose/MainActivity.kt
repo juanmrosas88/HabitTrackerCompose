@@ -7,25 +7,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.juanrosasdev.habittrackercompose.data.local.HabitDatabase
 import com.juanrosasdev.habittrackercompose.data.repository.HabitRepository
+import com.juanrosasdev.habittrackercompose.ui.habits.HabitMonthRow
 import com.juanrosasdev.habittrackercompose.ui.habits.HabitsViewModel
 import com.juanrosasdev.habittrackercompose.ui.habits.HabitsViewModelFactory
 
@@ -51,77 +48,76 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun HabitsScreen(
-    viewModel: HabitsViewModel
-) {
-    // Estado que VIENE del ViewModel
-    val habits by viewModel.habitsUiState.collectAsStateWithLifecycle()
-    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+fun HabitsScreen(viewModel: HabitsViewModel) {
+    val habits by viewModel.monthlyHabits.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .statusBarsPadding()
-            ) {
-                Text(
-                    text = "Mi Planner",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = selectedDate,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            items(
-                items = habits,
-                key = { it.id } // MUY importante
-            ) { habit ->
-                HabitRow(
-                    habitName = habit.name,
-                    emoji = habit.iconEmoji,
-                    isChecked = habit.isCompleted,
-                    onCheckedChange = { checked ->
-                        viewModel.onHabitChecked(
-                            habitId = habit.id,
-                            isChecked = checked
-                        )
-                    }
-                )
-            }
-        }
+    Column {
+        Text(
+            text = "Habit Tracker · ${viewModel.monthTitle}",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(16.dp)
+        )
+        Text(
+            text = viewModel.todayLabel,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+
+        MonthlyHabitGrid(
+            habits = habits,
+            days = viewModel.monthDays,
+            onToggle = viewModel::onDayToggle
+        )
     }
 }
 
 @Composable
-fun HabitRow(
-    habitName: String,
-    emoji: String,
-    isChecked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+fun MonthlyHabitGrid(
+    habits: List<HabitMonthRow>,
+    days: List<Int>,
+    onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = emoji, modifier = Modifier.padding(end = 8.dp))
-        Text(text = habitName, modifier = Modifier.weight(1f))
-        Checkbox(
-            checked = isChecked,
-            onCheckedChange = onCheckedChange
-        )
+    Row {
+        // Columna fija: nombres de hábitos
+        Column {
+            Spacer(modifier = Modifier.height(40.dp)) // header vacío
+            habits.forEach { habit ->
+                Text(
+                    text = "${habit.emoji} ${habit.name}",
+                    modifier = Modifier
+                        .height(40.dp)
+                        .padding(horizontal = 8.dp)
+                )
+            }
+        }
+
+        // Grilla desplazable
+        LazyRow {
+            items(days) { day ->
+                Column {
+                    // Header día
+                    Text(
+                        text = day.toString(),
+                        modifier = Modifier
+                            .height(40.dp)
+                            .padding(8.dp)
+                    )
+
+                    habits.forEach { habit ->
+                        val checked = habit.days[day] == true
+                        Checkbox(
+                            checked = checked,
+                            onCheckedChange = { newValue ->
+                                onToggle(habit.habitId, day, newValue)
+                            },
+                            modifier = Modifier.height(40.dp)
+                        )
+
+                    }
+                }
+            }
+        }
     }
 }
+

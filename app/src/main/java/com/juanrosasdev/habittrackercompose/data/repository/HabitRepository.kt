@@ -5,8 +5,15 @@ import com.juanrosasdev.habittrackercompose.data.entities.HabitRecordEntity
 import com.juanrosasdev.habittrackercompose.data.local.dao.HabitDao
 
 class HabitRepository(private val habitDao: HabitDao) {
+
     fun getHabitsForDate(date: String) =
         habitDao.getHabitsWithStatusForDate(date)
+
+    fun getMonthlyHabits(
+        startDate: String,
+        endDate: String
+    ) =
+        habitDao.getMonthlyHabits(startDate, endDate)
 
     suspend fun toggleHabit(
         habitId: Int,
