@@ -14,15 +14,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.juanrosasdev.habittrackercompose.data.local.HabitDatabase
 import com.juanrosasdev.habittrackercompose.data.repository.HabitRepository
 import com.juanrosasdev.habittrackercompose.ui.habits.HabitMonthRow
@@ -52,29 +57,46 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun HabitsScreen(viewModel: HabitsViewModel) {
-    val habits by viewModel.monthlyHabits.collectAsStateWithLifecycle()
-
+fun HabitsScreenContent(
+    habits: List<HabitMonthRow>,
+    monthTitle: String,
+    todayLabel: String,
+    days: List<Int>,
+    todayDay: Int,
+    onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit
+) {
     Column {
         ScreenHeader(
-            title = "Habit Tracker · ${
-                viewModel.monthTitle.replaceFirstChar {
-                    if (it.isLowerCase()) it.titlecase(
-                        Locale.ROOT
-                    ) else it.toString()
-                }
-            }",
-            subtitle = viewModel.todayLabel
+            title = "Habit Tracker · $monthTitle",
+            subtitle = todayLabel
         )
 
         MonthlyHabitGrid(
             habits = habits,
-            days = viewModel.monthDays,
-            todayDay = viewModel.todayDayOfMonth,
-            onToggle = viewModel::onDayToggle
+            days = days,
+            todayDay = todayDay,
+            onToggle = onToggle
         )
     }
 }
+
+
+@Composable
+fun HabitsScreen(viewModel: HabitsViewModel) {
+    val habits by viewModel.monthlyHabits.collectAsStateWithLifecycle()
+
+    HabitsScreenContent(
+        habits = habits,
+        monthTitle = viewModel.monthTitle.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString()
+        },
+        todayLabel = viewModel.todayLabel,
+        days = viewModel.monthDays,
+        todayDay = viewModel.todayDayOfMonth,
+        onToggle = viewModel::onDayToggle
+    )
+}
+
 
 
 @Composable
@@ -182,17 +204,50 @@ fun HabitDayCell(
 ) {
     val checked = habit.days[day] == true
     val enabled = day <= todayDay
+    val isToday = day == todayDay
 
-    Checkbox(
-        checked = checked,
-        enabled = enabled,
-        onCheckedChange = { newValue ->
-            onToggle(habit.habitId, day, newValue)
-        },
-        modifier = Modifier.height(40.dp)
-    )
+    Row(
+        modifier = Modifier
+            .height(40.dp)
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = { newValue ->
+                onToggle(habit.habitId, day, newValue)
+            }
+        )
+
+        if (isToday && checked) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                if (habit.currentStreak > 1) {
+                    Text(
+                        text = habit.currentStreak.toString(),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = "🔥",
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+            }
+
+        }
+
+    }
 }
-
 
 @Composable
 fun dayColumnBackground(
@@ -209,5 +264,63 @@ fun dayColumnBackground(
         MaterialTheme.colorScheme.background
 }
 
+private fun previewHabits(): List<HabitMonthRow> =
+    listOf(
+        HabitMonthRow(
+            habitId = 1,
+            name = "Ir al Gym",
+            emoji = "💪",
+            days = mapOf(
+                1 to true,
+                2 to true,
+                3 to true,
+                4 to false,
+                5 to true
+            ),
+            currentStreak = 1
+
+        ),
+        HabitMonthRow(
+            habitId = 2,
+            name = "Leer",
+            emoji = "📚",
+            days = mapOf(
+                1 to true,
+                2 to false,
+                3 to true
+            )
+        ),
+        HabitMonthRow(
+            habitId = 3,
+            name = "No Alcohol",
+            emoji = "🍺",
+            days = mapOf(
+                1 to true,
+                2 to true,
+                3 to true,
+                4 to true,
+                5 to true
+            ),
+            currentStreak = 5
+        )
+    )
+@Preview(
+    showBackground = true,
+    widthDp = 600,
+    heightDp = 300
+)
+@Composable
+fun HabitsScreenPreview() {
+    MaterialTheme {
+        HabitsScreenContent(
+            habits = previewHabits(),
+            monthTitle = "Septiembre",
+            todayLabel = "Martes, 17 de Septiembre",
+            days = (1..30).toList(),
+            todayDay = 5,
+            onToggle = { _, _, _ -> }
+        )
+    }
+}
 
 

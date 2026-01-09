@@ -4,5 +4,7 @@ data class HabitMonthRow(
     val habitId: Int,
     val name: String,
     val emoji: String,
-    val days: Map<Int, Boolean>
+    val days: Map<Int, Boolean>,
+    val currentStreak: Int = 0
+
 )

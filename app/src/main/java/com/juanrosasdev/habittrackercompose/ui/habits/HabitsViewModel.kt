@@ -46,15 +46,23 @@ class HabitsViewModel(
                     .groupBy { it.habitId }
                     .map { (_, habitRecords) ->
                         val first = habitRecords.first()
-                        HabitMonthRow(
-                            habitId = first.habitId,
-                            name = first.name,
-                            emoji = first.iconEmoji,
-                            days = habitRecords
+
+                        val daysMap =
+                            habitRecords
                                 .filter { it.date != null }
                                 .associate {
                                     LocalDate.parse(it.date!!).dayOfMonth to (it.isCompleted == true)
                                 }
+
+                        HabitMonthRow(
+                            habitId = first.habitId,
+                            name = first.name,
+                            emoji = first.iconEmoji,
+                            days = daysMap,
+                            currentStreak = calculateCurrentStreak(
+                                days = daysMap,
+                                todayDay = todayDayOfMonth
+                            )
                         )
                     }
             }
@@ -78,4 +86,22 @@ class HabitsViewModel(
             )
         }
     }
+
+    private fun calculateCurrentStreak(
+        days: Map<Int, Boolean>,
+        todayDay: Int
+    ): Int {
+        var streak = 0
+
+        for (day in todayDay downTo 1) {
+            if (days[day] == true) {
+                streak++
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+
 }
