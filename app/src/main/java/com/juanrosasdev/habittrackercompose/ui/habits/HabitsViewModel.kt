@@ -17,22 +17,23 @@ class HabitsViewModel(
     private val repository: HabitRepository
 ) : ViewModel() {
 
+    init {
+        viewModelScope.launch {
+            repository.ensureInitialHabits()
+        }
+    }
+
     private val today: LocalDate = LocalDate.now()
-
     val todayDayOfMonth: Int = LocalDate.now().dayOfMonth
-
     val todayLabel: String =
         today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
             .replaceFirstChar { it.uppercase() } +
                 ", ${today.dayOfMonth} de " +
                 today.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
                     .replaceFirstChar { it.uppercase() }
-
     private val currentMonth = YearMonth.now()
-
     val monthTitle: String =
         currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
-
     val monthDays: List<Int> =
         (1..currentMonth.lengthOfMonth()).toList()
 

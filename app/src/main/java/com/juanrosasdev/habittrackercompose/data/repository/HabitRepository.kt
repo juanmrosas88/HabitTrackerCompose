@@ -32,7 +32,7 @@ class HabitRepository(private val habitDao: HabitDao) {
         }
     }
 
-    val initialHabits = listOf(
+    private val initialHabits = listOf(
         HabitEntity(name = "Ir al Gym", iconEmoji = "💪"),
         HabitEntity(name = "Leer", iconEmoji = "📚"),
         HabitEntity(name = "Control de Redes Sociales", iconEmoji = "📵"),
