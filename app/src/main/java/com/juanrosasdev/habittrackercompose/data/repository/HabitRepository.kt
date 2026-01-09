@@ -32,6 +32,22 @@ class HabitRepository(private val habitDao: HabitDao) {
         }
     }
 
+    suspend fun insertHabit(
+        name: String,
+        emoji: String
+    ) {
+        habitDao.insertHabit(
+            HabitEntity(
+                name = name,
+                iconEmoji = emoji
+            )
+        )
+    }
+
+    suspend fun deleteHabit(habitId: Int) {
+        habitDao.deleteHabit(habitId)
+    }
+
     private val initialHabits = listOf(
         HabitEntity(name = "Ir al Gym", iconEmoji = "💪"),
         HabitEntity(name = "Leer", iconEmoji = "📚"),

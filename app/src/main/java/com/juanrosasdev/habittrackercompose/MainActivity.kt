@@ -15,11 +15,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -61,7 +74,8 @@ fun HabitsScreenContent(
     todayLabel: String,
     days: List<Int>,
     todayDay: Int,
-    onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit
+    onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit,
+    onRequestDeleteHabit: (HabitMonthRow) -> Unit
 ) {
     Column {
         ScreenHeader(
@@ -73,28 +87,69 @@ fun HabitsScreenContent(
             habits = habits,
             days = days,
             todayDay = todayDay,
-            onToggle = onToggle
+            onToggle = onToggle,
+            onRequestDeleteHabit = onRequestDeleteHabit
         )
     }
 }
-
 
 @Composable
 fun HabitsScreen(viewModel: HabitsViewModel) {
     val habits by viewModel.monthlyHabits.collectAsStateWithLifecycle()
 
-    HabitsScreenContent(
-        habits = habits,
-        monthTitle = viewModel.monthTitle.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString()
-        },
-        todayLabel = viewModel.todayLabel,
-        days = viewModel.monthDays,
-        todayDay = viewModel.todayDayOfMonth,
-        onToggle = viewModel::onDayToggle
-    )
-}
+    var showAddHabitDialog by remember { mutableStateOf(false) }
+    var habitToDelete by remember { mutableStateOf<HabitMonthRow?>(null) }
 
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showAddHabitDialog = true }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Agregar hábito")
+            }
+        }
+    ) { padding ->
+
+        Column(modifier = Modifier.padding(padding)) {
+            HabitsScreenContent(
+                habits = habits,
+                monthTitle = viewModel.monthTitle.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString()
+                },
+                todayLabel = viewModel.todayLabel,
+                days = viewModel.monthDays,
+                todayDay = viewModel.todayDayOfMonth,
+                onToggle = viewModel::onDayToggle,
+                onRequestDeleteHabit = { habit ->
+                    habitToDelete = habit
+                }
+            )
+        }
+
+        if (showAddHabitDialog) {
+            AddHabitDialog(
+                onDismiss = { showAddHabitDialog = false },
+                onConfirm = { name, emoji ->
+                    viewModel.addHabit(name, emoji)
+                    showAddHabitDialog = false
+                }
+            )
+        }
+
+        habitToDelete?.let { habit ->
+            ConfirmDeleteHabitDialog(
+                habitName = habit.name,
+                onConfirm = {
+                    viewModel.deleteHabit(habit.habitId)
+                    habitToDelete = null
+                },
+                onDismiss = {
+                    habitToDelete = null
+                }
+            )
+        }
+    }
+}
 
 
 @Composable
@@ -115,13 +170,13 @@ fun ScreenHeader(
     }
 }
 
-
 @Composable
 fun MonthlyHabitGrid(
     habits: List<HabitMonthRow>,
     days: List<Int>,
     todayDay: Int,
-    onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit
+    onToggle: (habitId: Int, day: Int, isCompleted: Boolean) -> Unit,
+    onRequestDeleteHabit: (HabitMonthRow) -> Unit
 ) {
     Row {
         HabitNameColumn(habits)
@@ -138,14 +193,60 @@ fun MonthlyHabitGrid(
                     onToggle = onToggle
                 )
             }
+            item{
+                DeleteHabitColumn(
+                    habits = habits,
+                    onDelete = { habitId ->
+                        habits.firstOrNull { it.habitId == habitId }?.let {
+                            onRequestDeleteHabit(it)
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
-fun HabitNameColumn(habits: List<HabitMonthRow>) {
+fun ConfirmDeleteHabitDialog(
+    habitName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Eliminar hábito") },
+        text = {
+            Text(
+                "¿Seguro que querés eliminar el hábito \"$habitName\"?\n\n" +
+                        "Esta acción no se puede deshacer."
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm
+            ) {
+                Text(
+                    text = "Eliminar",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun HabitNameColumn(
+    habits: List<HabitMonthRow>
+) {
     Column {
         Spacer(modifier = Modifier.height(40.dp))
+
         habits.forEach { habit ->
             Text(
                 text = "${habit.emoji} ${habit.name}",
@@ -153,6 +254,31 @@ fun HabitNameColumn(habits: List<HabitMonthRow>) {
                     .height(40.dp)
                     .padding(horizontal = 8.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun DeleteHabitColumn(
+    habits: List<HabitMonthRow>,
+    onDelete: (habitId: Int) -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(40.dp)) // header vacío
+
+        habits.forEach { habit ->
+            IconButton(
+                onClick = { onDelete(habit.habitId) },
+                modifier = Modifier.height(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar hábito",
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                )
+            }
         }
     }
 }
@@ -262,6 +388,49 @@ fun dayColumnBackground(
         MaterialTheme.colorScheme.background
 }
 
+
+@Composable
+fun AddHabitDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, emoji: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var emoji by remember { mutableStateOf("🔥") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nuevo hábito") },
+        text = {
+            Column {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre del hábito") }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = emoji,
+                    onValueChange = { emoji = it },
+                    label = { Text("Emoji") }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = name.isNotBlank(),
+                onClick = { onConfirm(name, emoji) }
+            ) {
+                Text("Agregar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
 private fun previewHabits(): List<HabitMonthRow> =
     listOf(
         HabitMonthRow(
@@ -302,9 +471,10 @@ private fun previewHabits(): List<HabitMonthRow> =
             currentStreak = 5
         )
     )
+
 @Preview(
     showBackground = true,
-    widthDp = 600,
+    widthDp = 2000,
     heightDp = 300
 )
 @Composable
@@ -316,7 +486,8 @@ fun HabitsScreenPreview() {
             todayLabel = "Martes, 17 de Septiembre",
             days = (1..30).toList(),
             todayDay = 5,
-            onToggle = { _, _, _ -> }
+            onToggle = { _, _, _ -> },
+            onRequestDeleteHabit = {}
         )
     }
 }

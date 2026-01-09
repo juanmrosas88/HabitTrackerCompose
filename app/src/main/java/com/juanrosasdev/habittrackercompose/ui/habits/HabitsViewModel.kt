@@ -73,6 +73,21 @@ class HabitsViewModel(
                 emptyList()
             )
 
+    fun addHabit(
+        name: String,
+        emoji: String
+    ) {
+        viewModelScope.launch {
+            repository.insertHabit(name, emoji)
+        }
+    }
+
+    fun deleteHabit(habitId: Int) {
+        viewModelScope.launch {
+            repository.deleteHabit(habitId)
+        }
+    }
+
     fun onDayToggle(
         habitId: Int,
         day: Int,
