@@ -3,6 +3,7 @@ package com.juanrosasdev.habittrackercompose.ui.habits
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.juanrosasdev.habittrackercompose.data.repository.HabitRepository
+import com.juanrosasdev.habittrackercompose.data.repository.HabitRepositoryContract
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -14,8 +15,9 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 class HabitsViewModel(
-    private val repository: HabitRepository
-) : ViewModel() {
+    private val repository: HabitRepositoryContract
+) : ViewModel()
+{
 
     init {
         viewModelScope.launch {
@@ -118,6 +120,4 @@ class HabitsViewModel(
         }
         return streak
     }
-
-
 }
