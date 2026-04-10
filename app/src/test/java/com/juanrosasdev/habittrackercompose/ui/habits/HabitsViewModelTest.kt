@@ -1,5 +1,6 @@
 package com.juanrosasdev.habittrackercompose.ui.habits
 
+import com.juanrosasdev.habittrackercompose.MainDispatcherRule
 import com.juanrosasdev.habittrackercompose.data.local.dao.MonthlyHabitRecord
 import com.juanrosasdev.habittrackercompose.fakes.FakeHabitRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -7,10 +8,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HabitsViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var fakeRepository: FakeHabitRepository
     private lateinit var viewModel: HabitsViewModel
