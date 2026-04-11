@@ -12,7 +12,11 @@ import com.juanrosasdev.habittrackercompose.ui.habits.dialogs.ConfirmDeleteHabit
 import java.util.Locale
 
 @Composable
-fun HabitsScreen(viewModel: HabitsViewModel) {
+fun HabitsScreen(
+    viewModel: HabitsViewModel,
+    isDarkTheme: Boolean,
+    onThemeToggle: (Boolean) -> Unit
+) {
     val habits by viewModel.monthlyHabits.collectAsStateWithLifecycle()
 
     var showAddHabitDialog by remember { mutableStateOf(false) }
@@ -35,6 +39,8 @@ fun HabitsScreen(viewModel: HabitsViewModel) {
             todayLabel = viewModel.todayLabel,
             days = viewModel.monthDays,
             todayDay = viewModel.todayDayOfMonth,
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
             onToggle = viewModel::onDayToggle,
             onRequestDeleteHabit = { habitToDelete = it }
         )

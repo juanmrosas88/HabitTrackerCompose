@@ -8,7 +8,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -18,6 +21,7 @@ import com.juanrosasdev.habittrackercompose.data.repository.HabitRepository
 import com.juanrosasdev.habittrackercompose.ui.habits.HabitsScreen
 import com.juanrosasdev.habittrackercompose.ui.habits.HabitsViewModel
 import com.juanrosasdev.habittrackercompose.ui.habits.HabitsViewModelFactory
+import com.juanrosasdev.habittrackercompose.ui.theme.HabitTrackerComposeTheme
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -31,7 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         askNotificationPermission()
-        scheduleNotification(targetHour = 21) // 👈 Aquí fijamos las 8:00 PM
+        scheduleNotification(targetHour = 21)
 
         val database = HabitDatabase.getDatabase(this)
         val repository = HabitRepository(database.habitDao())
@@ -43,8 +47,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MaterialTheme {
-                HabitsScreen(viewModel = viewModel)
+            var isDarkTheme by rememberSaveable { mutableStateOf(false) }
+
+            HabitTrackerComposeTheme(darkTheme = isDarkTheme) {
+                HabitsScreen(
+                    viewModel = viewModel,
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = { isDarkTheme = it }
+                )
             }
         }
     }
@@ -72,12 +82,12 @@ class MainActivity : ComponentActivity() {
         val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(
             24, TimeUnit.HOURS
         )
-            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS) // 👈 Retraso hasta la hora deseada
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "habit_reminder_work",
-            ExistingPeriodicWorkPolicy.KEEP, // Mantiene la programación si ya existe
+            ExistingPeriodicWorkPolicy.KEEP,
             workRequest
         )
     }

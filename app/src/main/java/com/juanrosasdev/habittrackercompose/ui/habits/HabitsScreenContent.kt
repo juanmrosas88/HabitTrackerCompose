@@ -14,13 +14,17 @@ fun HabitsScreenContent(
     todayLabel: String,
     days: List<Int>,
     todayDay: Int,
+    isDarkTheme: Boolean,
+    onThemeToggle: (Boolean) -> Unit,
     onToggle: (Int, Int, Boolean) -> Unit,
     onRequestDeleteHabit: (HabitMonthRow) -> Unit
 ) {
     Column(modifier) {
         ScreenHeader(
             title = "Habit Tracker · $monthTitle",
-            subtitle = todayLabel
+            subtitle = todayLabel,
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle
         )
 
         MonthlyHabitGrid(
