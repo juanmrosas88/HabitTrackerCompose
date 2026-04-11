@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "com.juanrosasdev.habittrackercompose"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -49,6 +49,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     ksp("androidx.room:room-compiler:2.6.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // WorkManager para notificaciones
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
