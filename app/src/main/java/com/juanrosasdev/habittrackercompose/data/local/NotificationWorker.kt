@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.juanrosasdev.habittrackercompose.MainActivity
+import java.time.LocalDate
 import java.util.*
 
 class NotificationWorker(
@@ -21,16 +22,17 @@ class NotificationWorker(
         val database = HabitDatabase.getDatabase(applicationContext)
         val habitDao = database.habitDao()
         
-        val habitsCount = habitDao.getHabitsCount()
+        val today = LocalDate.now().toString()
+        val uncompletedCount = habitDao.getUncompletedHabitsCount(today)
 
-        if (habitsCount > 0) {
-            showNotification()
+        if (uncompletedCount > 0) {
+            showNotification(uncompletedCount)
         }
 
         return Result.success()
     }
 
-    private fun showNotification() {
+    private fun showNotification(count: Int) {
         val channelId = "habit_reminder_channel"
         val notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -57,10 +59,16 @@ class NotificationWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val message = if (count == 1) {
+            "Tienes 1 hábito pendiente por completar hoy. ¡No te rindas!"
+        } else {
+            "Tienes $count hábitos pendientes por completar hoy. ¡Vamos a por ellos!"
+        }
+
         val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("¡No olvides tus hábitos! 🚀")
-            .setContentText("Tienes hábitos pendientes para hoy. ¡Tú puedes!")
+            .setContentTitle("¡Hábitos pendientes! 🚀")
+            .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

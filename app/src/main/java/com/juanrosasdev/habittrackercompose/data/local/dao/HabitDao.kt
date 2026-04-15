@@ -34,6 +34,17 @@ interface HabitDao {
 
     @Query(
         """
+        SELECT COUNT(*) 
+        FROM habits h 
+        LEFT JOIN habit_records r 
+            ON h.id = r.habitId AND r.date = :date
+        WHERE r.isCompleted IS NULL OR r.isCompleted = 0
+        """
+    )
+    suspend fun getUncompletedHabitsCount(date: String): Int
+
+    @Query(
+        """
         SELECT h.id, h.name, h.iconEmoji, 
                COALESCE(r.isCompleted, 0) as isCompleted 
         FROM habits h 
